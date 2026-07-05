@@ -178,7 +178,7 @@ function StickyNav() {
                         style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: '#475569',
+                            color: '#000000',
                             textDecoration: 'none',
                             padding: '6px 14px',
                             borderRadius: 99,
@@ -189,7 +189,7 @@ function StickyNav() {
                             e.currentTarget.style.background = 'rgba(14,165,233,0.08)';
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.color = '#475569';
+                            e.currentTarget.style.color = '#000000';
                             e.currentTarget.style.background = 'transparent';
                         }}
                     >
@@ -207,7 +207,7 @@ function StatPill({ value, label }: { value: string; label: string }) {
     return (
         <div style={{ textAlign: 'center', padding: '0 24px' }}>
             <div style={{ fontSize: 26, fontWeight: 800, color: '#0ea5e9' }}>{value}</div>
-            <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: '#000000', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>
                 {label}
             </div>
         </div>
@@ -309,7 +309,7 @@ export default function HeroSection() {
                         style={{
                             fontSize: 'clamp(16px, 2.5vw, 22px)',
                             fontWeight: 600,
-                            color: '#475569',
+                            color: '#000000',
                             marginBottom: 14,
                             animation: 'fadeInUp 1s ease both 0.2s',
                         }}
@@ -320,7 +320,7 @@ export default function HeroSection() {
                     <p
                         style={{
                             fontSize: 'clamp(13px, 1.8vw, 16px)',
-                            color: '#94a3b8',
+                            color: '#000000',
                             marginBottom: 48,
                             maxWidth: 520,
                             margin: '0 auto 48px',

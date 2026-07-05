@@ -1,0 +1,58 @@
+[
+  {
+    "topic": "pH",
+    "content": "pH measures how acidic or basic water is on a scale of 0 to 14. A pH of 7.0 is neutral. The WHO recommends drinking water to have a pH between 6.5 and 8.5. Low pH (acidic water) can corrode pipes and leach metals. High pH (alkaline water) can taste bitter and may indicate contamination. pH below 6.5 can cause gastrointestinal irritation. pH above 8.5 can reduce chlorine effectiveness."
+  },
+  {
+    "topic": "TDS",
+    "content": "TDS stands for Total Dissolved Solids. It measures the total concentration of dissolved substances in water, including minerals, salts, metals, and ions. The WHO guideline for acceptable TDS is 300 ppm. TDS up to 600 ppm is acceptable. TDS above 1000 ppm is generally considered unacceptable for drinking. High TDS can affect taste, cause mineral buildup, and indicate contamination. Low TDS (below 50 ppm) may lack essential minerals."
+  },
+  {
+    "topic": "Turbidity",
+    "content": "Turbidity is the cloudiness or haziness of water caused by suspended particles. It is measured in Nephelometric Turbidity Units (NTU). WHO guidelines recommend drinking water to have turbidity below 1 NTU. Turbidity above 4 NTU is considered unacceptable. High turbidity indicates the presence of sediment, bacteria, viruses, or parasites. It can interfere with disinfection processes. Turbidity is an important indicator of water treatment effectiveness."
+  },
+  {
+    "topic": "Temperature",
+    "content": "Ideal drinking water temperature is between 10 and 15 degrees Celsius. Water temperature above 25°C promotes bacterial growth including E. coli and Legionella. Cold water generally tastes better and is safer for drinking. High water temperature can reduce dissolved oxygen levels, harming aquatic life. Water above 30°C should not be consumed without treatment. Temperature affects the effectiveness of disinfection chemicals."
+  },
+  {
+    "topic": "Gas levels",
+    "content": "Dissolved gases in water include oxygen, carbon dioxide, hydrogen sulfide, and methane. Hydrogen sulfide causes a rotten egg smell and indicates anaerobic bacterial activity. Elevated gas levels in MQ sensor readings above ADC 150 indicate potential contamination. High dissolved CO2 can make water acidic. Methane in water can be explosive at high concentrations and indicates groundwater contamination from organic decomposition."
+  },
+  {
+    "topic": "WQI",
+    "content": "Water Quality Index (WQI) is a composite score from 0 to 100 that summarizes overall water quality. A WQI of 90-100 indicates excellent water quality safe for all uses. WQI of 70-90 indicates good quality suitable for drinking with minimal treatment. WQI of 50-70 indicates medium quality requiring standard treatment. WQI of 25-50 indicates poor quality requiring advanced treatment. WQI below 25 indicates very poor quality unfit for use. WQI combines pH, TDS, turbidity, temperature, and other parameters."
+  },
+  {
+    "topic": "Waterborne diseases",
+    "content": "Common waterborne diseases include cholera, typhoid fever, dysentery, hepatitis A, and giardiasis. Cholera is caused by Vibrio cholerae bacteria and causes severe diarrhea. Typhoid is caused by Salmonella typhi and spreads through contaminated water and food. Cryptosporidiosis is caused by the parasite Cryptosporidium and is resistant to chlorination. E. coli contamination indicates fecal contamination. These diseases can be prevented through proper water treatment, boiling, and filtration."
+  },
+  {
+    "topic": "Water treatment",
+    "content": "Common water treatment methods include boiling, chlorination, filtration, reverse osmosis, and UV treatment. Boiling water for at least 1 minute kills most pathogens. Chlorination kills bacteria and viruses but does not remove heavy metals or TDS. Reverse osmosis removes TDS, heavy metals, and most contaminants but wastes water. UV treatment kills pathogens without chemicals but does not remove dissolved solids. Activated carbon filters remove chlorine, odors, and some chemicals. Ceramic filters remove bacteria and turbidity."
+  },
+  {
+    "topic": "WHO standards",
+    "content": "World Health Organization (WHO) drinking water quality guidelines: pH 6.5-8.5, TDS less than 300 ppm recommended (600 ppm acceptable), Turbidity less than 1 NTU (4 NTU acceptable), Temperature 10-25°C for drinking, Nitrates less than 50 mg/L, Lead less than 0.01 mg/L, Arsenic less than 0.01 mg/L, Fluoride less than 1.5 mg/L, Chlorine residual 0.2-0.5 mg/L. These are guidelines not mandatory standards, and countries may set their own limits."
+  },
+  {
+    "topic": "Irrigation water quality",
+    "content": "For irrigation, TDS above 1000 ppm can harm salt-sensitive crops. TDS above 3000 ppm is unsuitable for most crops. Sodium Adsorption Ratio (SAR) above 9 can damage soil structure. Boron above 2 mg/L can be toxic to plants. pH for irrigation should be between 6.0 and 8.5. High chloride levels above 350 mg/L damage most crops. Bicarbonate above 500 mg/L causes soil alkalinity. Irrigation with poor quality water leads to soil salinization."
+  },
+  {
+    "topic": "Skin effects of water quality",
+    "content": "Hard water with high TDS can cause skin dryness and eczema flare-ups. Chlorinated water can cause skin irritation and dermatitis with prolonged exposure. Water with high turbidity may contain bacteria that cause folliculitis (hair follicle infection). Acidic water (low pH) can cause skin irritation and strip natural oils. Alkaline water can cause contact dermatitis. Arsenic contamination causes skin lesions and hyperkeratosis. Regular exposure to contaminated water causes cumulative skin damage."
+  },
+  {
+    "topic": "Drinking suitability",
+    "content": "Water is safe to drink directly when: pH is between 6.5-8.5, TDS is below 300 ppm, turbidity is below 1 NTU, temperature is below 25°C, no detectable coliforms, and gas levels are within safe limits. Water requires basic treatment (boiling or UV) when turbidity is 1-4 NTU or TDS is 300-600 ppm. Water requires advanced treatment (RO or multi-stage filtration) when TDS is above 600 ppm or turbidity exceeds 4 NTU. Water is unsafe even after treatment when TDS exceeds 2000 ppm or pH is outside 4.0-10.0."
+  },
+  {
+    "topic": "Cooking water quality",
+    "content": "Cooking water quality affects food safety and nutritional value. High TDS water can affect the taste of food and tea. Water with high chlorine content can destroy some vitamins and alter food flavor. Boiling cooking water is recommended when turbidity exceeds 1 NTU. Hard water (high calcium and magnesium) makes legumes and vegetables harder to cook and reduces nutrient absorption. Water with high nitrates is particularly dangerous for infants when used in formula preparation."
+  },
+  {
+    "topic": "Bathing water quality",
+    "content": "For bathing, water turbidity should be below 5 NTU. Chlorine in tap water above 0.5 mg/L can cause eye and skin irritation. Water temperature for bathing should be 35-40°C. Hard water leaves mineral deposits on skin and hair. Contaminated bathing water can cause ear infections, eye infections, and skin rashes. Water with high coliform bacteria count is unsafe for bathing. Children and immunocompromised individuals are more sensitive to bathing water quality."
+  }
+]

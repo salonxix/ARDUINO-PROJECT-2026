@@ -1,0 +1,21 @@
+Parameter,WHO_Guideline,Acceptable_Limit,Unit,Health_Risk_If_Exceeded
+pH,7.0,6.5-8.5,unitless,Corrosion of pipes; gastrointestinal irritation; altered taste
+TDS,300,600,ppm,Kidney strain; altered taste; mineral toxicity at high levels
+Turbidity,1,4,NTU,Pathogen harboring; reduced disinfection effectiveness; gastrointestinal illness
+Temperature,15,25,Celsius,Bacterial growth above 25C; Legionella risk above 20C
+Nitrates,0,50,mg/L,Blue baby syndrome in infants; methemoglobinemia
+Lead,0,0.01,mg/L,Neurological damage especially in children; kidney damage
+Arsenic,0,0.01,mg/L,Skin lesions; cancer risk with long-term exposure
+Fluoride,0.5,1.5,mg/L,Dental and skeletal fluorosis above 1.5 mg/L
+Chlorine,0.2,0.5,mg/L,Insufficient disinfection below 0.2; taste issues above 0.5
+E.coli,0,0,CFU/100mL,Fecal contamination; gastroenteritis; typhoid; cholera
+Total Coliforms,0,0,CFU/100mL,Indicates microbial contamination; potential pathogen presence
+Hardness,100,500,mg/L CaCO3,Scale buildup above 500; skin dryness; taste issues
+Iron,0.1,0.3,mg/L,Staining and taste issues above 0.3; not a direct health risk
+Manganese,0.05,0.1,mg/L,Neurological effects with long-term high exposure
+Chloride,0,250,mg/L,Salty taste above 250; corrosion of pipes
+Sulfate,0,250,mg/L,Laxative effect above 600; taste issues above 250
+Calcium,0,200,mg/L,Essential mineral; contributes to hardness
+Magnesium,0,50,mg/L,Laxative effect at high levels; essential mineral
+Sodium,0,200,mg/L,Hypertension risk with high sodium intake
+Potassium,0,12,mg/L,Taste issues above 12; generally safe

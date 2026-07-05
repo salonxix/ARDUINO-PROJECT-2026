@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { callGeminiJSON } from '@/services/gemini';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
   try {
     const { ph, tds, temperature, turbidity, gas, firebaseKey, location } = await req.json();
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured.' },
-        { status: 500 }
-      );
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',   // forces pure JSON output — no markdown fences
-        temperature: 0.1,
-      },
-    });
 
     const prompt = `You are AquaVitals AI, a water quality expert. Analyze these sensor readings.
 
@@ -62,22 +45,7 @@ Return a JSON object with this exact structure (fill every field with real analy
   "overallSummary": "2-3 sentences summarising water quality, biggest concern, and top recommendation."
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
-    // Robust JSON extraction — works even if model adds extra text
-    const jsonStart = text.indexOf('{');
-    const jsonEnd = text.lastIndexOf('}');
-
-    if (jsonStart === -1 || jsonEnd === -1) {
-      console.error('No JSON in response:', text.slice(0, 200));
-      return NextResponse.json(
-        { error: 'AI did not return valid JSON. Try again.' },
-        { status: 500 }
-      );
-    }
-
-    const analysis = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    const analysis = await callGeminiJSON(prompt, { temperature: 0.1 });
 
     // ── Save to Firebase ──────────────────────────────────────────────────────
     if (firebaseKey) {
@@ -90,10 +58,8 @@ Return a JSON object with this exact structure (fill every field with real analy
 
     return NextResponse.json(analysis);
   } catch (err) {
-    console.error('Analysis error:', err);
-    return NextResponse.json(
-      { error: 'Failed to generate analysis. Check your API key and sensor values.' },
-      { status: 500 }
-    );
+    console.error('[AquaVitals] /api/analyze error:', err);
+    const message = err instanceof Error ? err.message : 'Analysis failed. Please try again.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

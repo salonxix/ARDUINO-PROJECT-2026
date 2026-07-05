@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
+  --foreground: #000000;
 }
 
 @theme inline {
@@ -12,19 +12,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: linear-gradient(160deg, #f0f9ff 0%, #f0f4f8 40%, #f5f3ff 100%);
   background-attachment: fixed;
-  color: #0f172a;
+  color: #000000;
   font-family: 'Inter', Arial, Helvetica, sans-serif;
   min-height: 100vh;
+}
+
+/* Force all text elements to black on the light background */
+h1, h2, h3, h4, h5, h6, p, span, a, li, td, th, label, button {
+  color: inherit;
+}
+
+/* Hero section — override gradient text clips back to black for plain text */
+.hero-text {
+  color: #000000;
 }
 
 /* ── Leaflet popup dark theme overrides ───────────────────────────────────── */
