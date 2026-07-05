@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-// ── Types — matches /api/image-analysis response ──────────────────────────────
+// ── Types — supports both old and new API response schemas ────────────────────
 
 interface VisualAnalysis {
-    // New schema fields
+    // New schema
     clarity?: string;
     colour?: string;
     algae?: string;
@@ -13,7 +13,7 @@ interface VisualAnalysis {
     oilLayer?: string;
     sediment?: string;
     visibleContamination?: string;
-    // Legacy fields — kept for safety
+    // Old schema (kept for compatibility)
     color?: string;
     cloudiness?: string;
     suspendedParticles?: string;
@@ -21,17 +21,37 @@ interface VisualAnalysis {
     overallVisual?: string;
 }
 
+interface SensorAnalysis {
+    ph?: string;
+    tds?: string;
+    turbidity?: string;
+    temperature?: string;
+    gas?: string;
+    wqi?: string;
+    grade?: string;
+}
+
 interface ImageAnalysisResult {
     visualAnalysis: VisualAnalysis;
-    summary?: string;              // new schema
-    combinedAssessment?: string;              // old schema
+    // New schema
+    summary?: string;
+    // Old schema
+    combinedAssessment?: string;
+    sensorAnalysis?: SensorAnalysis;
     recommendations: string[];
     confidence: string;
-    healthRisk?: string;              // optional — old schema only
-    sensorAnalysis?: Record<string, string>;
+    healthRisk?: string;   // optional — absent in new schema
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function riskColor(risk?: string) {
+    const r = (risk ?? '').toLowerCase();
+    if (r === 'none' || r === 'low') return { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/25' };
+    if (r === 'moderate') return { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/25' };
+    if (r === 'high' || r === 'critical') return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/25' };
+    return { bg: 'bg-gray-500/10', text: 'text-gray-400', border: 'border-gray-500/25' };
+}
 
 function confidenceColor(c?: string) {
     if (c === 'High') return 'text-green-400';
@@ -40,7 +60,7 @@ function confidenceColor(c?: string) {
 }
 
 function VisualRow({ label, value }: { label: string; value?: string }) {
-    if (!value || value === 'N/A' || value === 'none') return null;
+    if (!value || value === 'N/A' || value.toLowerCase() === 'none') return null;
     return (
         <div className="flex items-start justify-between gap-4 py-2 border-b border-white/5 last:border-0">
             <span className="text-xs text-gray-500 uppercase tracking-wide shrink-0 w-36">{label}</span>
@@ -147,7 +167,7 @@ export default function VisualWaterInspector() {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    // Summary text — prefer new 'summary', fall back to old 'combinedAssessment'
+    const rc = result ? riskColor(result.healthRisk) : null;
     const summaryText = result?.summary ?? result?.combinedAssessment ?? '';
     const va = result?.visualAnalysis;
 
@@ -220,7 +240,7 @@ export default function VisualWaterInspector() {
                         </div>
                     )}
 
-                    {/* Image preview + Analyse button */}
+                    {/* Preview + Analyse */}
                     {imagePreview && !showWebcam && (
                         <div className="space-y-4">
                             <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20 relative">
@@ -252,8 +272,14 @@ export default function VisualWaterInspector() {
                     {result && !loading && (
                         <div className="space-y-6 pt-2 border-t border-white/10">
 
-                            {/* Confidence badge */}
+                            {/* Badges */}
                             <div className="flex flex-wrap gap-3">
+                                {result.healthRisk && (
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${rc?.border} ${rc?.bg}`}>
+                                        <span className="text-sm">⚠️</span>
+                                        <span className={`text-sm font-bold ${rc?.text}`}>Health Risk: {result.healthRisk}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5">
                                     <span className="text-sm">🎯</span>
                                     <span className={`text-sm font-bold ${confidenceColor(result.confidence)}`}>
@@ -280,6 +306,11 @@ export default function VisualWaterInspector() {
                                         <span className="text-lg">👁</span>
                                         <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">Visual Findings</h3>
                                     </div>
+                                    {va.overallVisual && (
+                                        <div className="mb-3 p-3 rounded-lg bg-white/5">
+                                            <p className="text-sm text-gray-200 leading-relaxed">{va.overallVisual}</p>
+                                        </div>
+                                    )}
                                     <div className="space-y-0">
                                         <VisualRow label="Colour" value={va.colour ?? va.color} />
                                         <VisualRow label="Clarity" value={va.clarity} />
@@ -291,32 +322,34 @@ export default function VisualWaterInspector() {
                                         <VisualRow label="Sediment" value={va.sediment} />
                                         <VisualRow label="Particles" value={va.suspendedParticles} />
                                         <VisualRow label="Contamination" value={va.visibleContamination} />
-                                        {va.overallVisual && (
-                                            <div className="pt-3 mt-2 border-t border-white/5">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Overall</p>
-                                                <p className="text-sm text-gray-300 leading-relaxed">{va.overallVisual}</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Sensor Findings — shown only if present in response */}
-                            {result.sensorAnalysis && Object.keys(result.sensorAnalysis).length > 0 && (
+                            {/* Sensor Findings */}
+                            {result.sensorAnalysis && (
                                 <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
                                     <div className="flex items-center gap-2 mb-3">
                                         <span className="text-lg">📡</span>
                                         <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">Sensor Findings</h3>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {Object.entries(result.sensorAnalysis)
-                                            .filter(([, v]) => v && v !== 'N/A')
-                                            .map(([key, val]) => (
-                                                <div key={key} className="rounded-lg bg-white/5 px-3 py-2.5">
-                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{key}</p>
-                                                    <p className="text-xs text-gray-300 leading-relaxed">{val}</p>
+                                        {[
+                                            { icon: '💧', label: 'pH', val: result.sensorAnalysis.ph },
+                                            { icon: '🧪', label: 'TDS', val: result.sensorAnalysis.tds },
+                                            { icon: '🌊', label: 'Turbidity', val: result.sensorAnalysis.turbidity },
+                                            { icon: '🌡️', label: 'Temperature', val: result.sensorAnalysis.temperature },
+                                            { icon: '💨', label: 'Gas', val: result.sensorAnalysis.gas },
+                                            { icon: '📊', label: 'WQI', val: result.sensorAnalysis.wqi },
+                                        ].filter((i) => i.val && i.val !== 'N/A').map(({ icon, label, val }) => (
+                                            <div key={label} className="rounded-lg bg-white/5 px-3 py-2.5">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <span className="text-sm">{icon}</span>
+                                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{label}</span>
                                                 </div>
-                                            ))}
+                                                <p className="text-xs text-gray-300 leading-relaxed">{val}</p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

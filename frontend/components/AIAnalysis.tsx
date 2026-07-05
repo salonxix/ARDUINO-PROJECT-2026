@@ -306,15 +306,29 @@ export default function AIAnalysis() {
             async ({ coords }) => {
                 try {
                     const res = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`,
+                        `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&addressdetails=1`,
                         { headers: { 'Accept-Language': 'en' } }
                     );
                     const data = await res.json();
-                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
-                    const country = data.address?.country || '';
-                    setLocation(city && country ? `${city}, ${country}` : city || country || 'Unknown location');
+                    const addr = data.address ?? {};
+
+                    // Build precise address: road/suburb + city + state + country
+                    const parts = [
+                        addr.road ?? addr.pedestrian ?? addr.footway ?? null,
+                        addr.suburb ?? addr.neighbourhood ?? addr.hamlet ?? null,
+                        addr.city ?? addr.town ?? addr.village ?? addr.county ?? null,
+                        addr.state ?? null,
+                        addr.country ?? null,
+                    ].filter(Boolean) as string[];
+
+                    // Remove duplicate consecutive parts
+                    const unique = parts.filter((p, i) => p !== parts[i - 1]);
+                    const label = unique.length > 0 ? unique.join(', ') : data.display_name?.slice(0, 80) ?? 'Unknown location';
+
+                    setLocation(label);
                 } catch {
-                    setLocation(`${coords.latitude.toFixed(2)}, ${coords.longitude.toFixed(2)}`);
+                    // Fall back to raw GPS coordinates if reverse geocode fails
+                    setLocation(`${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`);
                 } finally {
                     setLocating(false);
                 }
@@ -323,7 +337,11 @@ export default function AIAnalysis() {
                 setLocation('');
                 setLocating(false);
             },
-            { timeout: 8000 }
+            {
+                enableHighAccuracy: true,   // use GPS chip, not cell/WiFi
+                timeout: 15000,  // allow more time for precise fix
+                maximumAge: 0,      // never use cached position
+            }
         );
     }, []);
 
