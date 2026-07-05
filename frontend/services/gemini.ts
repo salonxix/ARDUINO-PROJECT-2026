@@ -1,131 +1,139 @@
 /**
  * services/gemini.ts
  * ──────────────────
- * Shared Gemini helper using direct REST API calls.
- * Uses the v1 endpoint which supports current models (gemini-2.5-flash-lite etc).
+ * Shared AI helper — now powered by Sarvam AI (sarvam-30b).
+ * Uses the OpenAI-compatible /v1/chat/completions endpoint.
+ *
+ * Sarvam does NOT support image/vision input.
+ * /api/image-analysis uses its own Gemini call for vision.
  *
  * Exported functions:
- *   getGeminiModel(options?)   — returns a thin model wrapper
- *   callGeminiJSON(prompt)     — calls Gemini and parses the JSON response
- *   callGeminiText(prompt)     — calls Gemini and returns plain text
- *   startGeminiChat(...)       — starts a chat session with history
+ *   callGeminiJSON(prompt, options)              — structured JSON response
+ *   callGeminiText(prompt, options)              — plain text response
+ *   callGeminiChat(history, userMsg, options)    — multi-turn chat
+ *   getGeminiModel(options)                      — legacy shim
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface GeminiModelOptions {
-    /** Gemini model name. Default: 'gemini-2.5-flash-lite' */
+    /** Model name. Default: 'sarvam-30b' */
     model?: string;
-    /** Response temperature 0–2. Default 0.2. */
+    /** Temperature 0–2. Default: 0.2 */
     temperature?: number;
-    /** Force JSON output via responseMimeType. */
+    /** Unused — kept for API compatibility */
     forceJson?: boolean;
-    /** System-level instruction. */
+    /** System-level instruction */
     systemInstruction?: string;
 }
 
-interface GeminiPart { text: string }
-interface GeminiContent { role: string; parts: GeminiPart[] }
+interface ChatMessage {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+}
 
-// ── Core REST caller ──────────────────────────────────────────────────────────
+export interface GeminiContent {
+    role: string;
+    parts: { text: string }[];
+}
 
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+// ── Core caller ───────────────────────────────────────────────────────────────
 
-async function callGeminiRaw(
-    contents: GeminiContent[],
+const SARVAM_URL = 'https://api.sarvam.ai/v1/chat/completions';
+const DEFAULT_MODEL = 'sarvam-30b';
+
+async function callSarvam(
+    messages: ChatMessage[],
     options: GeminiModelOptions = {},
     retryCount = 0,
 ): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY is not configured in .env.local');
+    const apiKey = process.env.SARVAM_API_KEY;
+    if (!apiKey) throw new Error('SARVAM_API_KEY is not configured in .env.local');
 
-    const {
-        model = 'gemini-2.5-flash-lite',
-        temperature = 0.2,
-        forceJson = false,
-        systemInstruction,
-    } = options;
+    const { model = DEFAULT_MODEL, temperature = 0.2 } = options;
 
-    const url = `${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`;
-
-    const body: Record<string, unknown> = {
-        contents,
-        generationConfig: {
-            temperature,
-        },
-    };
-
-    if (systemInstruction) {
-        body.systemInstruction = { parts: [{ text: systemInstruction }] };
-    }
-
-    const res = await fetch(url, {
+    const res = await fetch(SARVAM_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model,
+            messages,
+            temperature,
+            max_tokens: 4000,
+        }),
     });
 
     if (!res.ok) {
         const errText = await res.text();
 
         if (res.status === 429) {
-            throw new Error(
-                'The AI service is temporarily unavailable due to usage limits. ' +
-                'Please wait a moment and try again.',
-            );
+            if (retryCount < 2) {
+                await new Promise((r) => setTimeout(r, 2000 * (retryCount + 1)));
+                return callSarvam(messages, options, retryCount + 1);
+            }
+            throw new Error('The AI service is temporarily busy due to usage limits. Please wait and try again.');
         }
 
-        // Parse error message from Google's JSON response if possible
         let friendlyMsg = 'The AI service is currently unavailable. Please try again.';
         try {
             const errJson = JSON.parse(errText);
             const detail = errJson?.error?.message ?? '';
             const code = errJson?.error?.code ?? res.status;
-            if (code === 401 || detail.includes('authentication') || detail.includes('credentials') || detail.includes('API key')) {
-                friendlyMsg = 'Invalid Gemini API key. Please replace GEMINI_API_KEY in .env.local with a valid key starting with AIzaSy… from https://aistudio.google.com/app/apikey';
-            } else if (detail.includes('not found') || code === 404) {
-                friendlyMsg = 'AI model is unavailable. Please try again later.';
-            } else if (code === 503 || detail.includes('demand') || detail.includes('UNAVAILABLE')) {
-                // Auto-retry up to 2 times with increasing delay on 503
+            if (code === 401 || detail.includes('authentication') || detail.includes('credentials')) {
+                friendlyMsg = 'Invalid Sarvam API key. Please check your SARVAM_API_KEY in .env.local';
+            } else if (detail.includes('deprecated') || detail.includes('not found')) {
+                friendlyMsg = 'AI model unavailable. Please try again later.';
+            } else if (code === 503 || detail.includes('UNAVAILABLE') || detail.includes('demand')) {
                 if (retryCount < 2) {
                     await new Promise((r) => setTimeout(r, 2000 * (retryCount + 1)));
-                    return callGeminiRaw(contents, options, retryCount + 1);
+                    return callSarvam(messages, options, retryCount + 1);
                 }
                 friendlyMsg = 'The AI service is temporarily busy. Please wait a moment and try again.';
             }
-        } catch { /* ignore parse failures */ }
+        } catch { /* ignore */ }
 
-        console.error('[AquaVitals] Gemini REST error:', res.status, errText.slice(0, 200));
+        console.error('[AquaVitals] Sarvam error:', res.status, errText.slice(0, 200));
         throw new Error(friendlyMsg);
     }
 
     const data = await res.json();
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
-    if (!text) throw new Error('Gemini returned an empty response.');
-    return text.trim();
+    // Extract content — handle both regular and reasoning-heavy responses
+    const msg = data?.choices?.[0]?.message;
+    const content = msg?.content ?? msg?.reasoning_content ?? '';
+
+    if (!content) throw new Error('Sarvam returned an empty response.');
+
+    // Extract the actual text — skip any chain-of-thought reasoning prefix
+    return content.trim();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
  * callGeminiJSON<T>()
- * Calls Gemini with forceJson=true and parses the response as JSON.
+ * Calls Sarvam and extracts the outermost JSON object from the response.
  */
 export async function callGeminiJSON<T = Record<string, unknown>>(
     prompt: string,
     options: GeminiModelOptions = {},
 ): Promise<T> {
-    const raw = await callGeminiRaw(
-        [{ role: 'user', parts: [{ text: prompt }] }],
-        { ...options, forceJson: true },
-    );
+    const msgs: ChatMessage[] = [];
+    if (options.systemInstruction) {
+        msgs.push({ role: 'system', content: options.systemInstruction });
+    }
+    msgs.push({ role: 'user', content: prompt });
 
-    // Robust extraction: find outermost { … } in case of extra text
+    const raw = await callSarvam(msgs, options);
+
+    // Robust JSON extraction — handles any reasoning text before/after the JSON
     const start = raw.indexOf('{');
     const end = raw.lastIndexOf('}');
     if (start === -1 || end === -1) {
-        throw new Error(`Gemini did not return valid JSON. Response: ${raw.slice(0, 200)}`);
+        throw new Error(`AI did not return valid JSON. Try again.`);
     }
 
     return JSON.parse(raw.slice(start, end + 1)) as T;
@@ -133,44 +141,50 @@ export async function callGeminiJSON<T = Record<string, unknown>>(
 
 /**
  * callGeminiText()
- * Calls Gemini and returns plain text.
+ * Calls Sarvam and returns plain text.
  */
 export async function callGeminiText(
     prompt: string,
     options: GeminiModelOptions = {},
 ): Promise<string> {
-    return callGeminiRaw(
-        [{ role: 'user', parts: [{ text: prompt }] }],
-        options,
-    );
+    const msgs: ChatMessage[] = [];
+    if (options.systemInstruction) {
+        msgs.push({ role: 'system', content: options.systemInstruction });
+    }
+    msgs.push({ role: 'user', content: prompt });
+    return callSarvam(msgs, options);
 }
 
 /**
  * callGeminiChat()
- * Sends a full conversation history + new user message to Gemini.
- * Used by /api/chat to maintain conversation context.
- *
- * @param history     Prior turns in { role: 'user'|'model', parts }[] format
- * @param userMessage The new user message to send
- * @param options     Model options including systemInstruction
+ * Multi-turn chat with conversation history.
+ * History is in Gemini format ({ role, parts }[]) — converted to Sarvam format internally.
  */
 export async function callGeminiChat(
     history: GeminiContent[],
     userMessage: string,
     options: GeminiModelOptions = {},
 ): Promise<string> {
-    const contents: GeminiContent[] = [
-        ...history,
-        { role: 'user', parts: [{ text: userMessage }] },
-    ];
+    const msgs: ChatMessage[] = [];
 
-    return callGeminiRaw(contents, options);
+    if (options.systemInstruction) {
+        msgs.push({ role: 'system', content: options.systemInstruction });
+    }
+
+    // Convert Gemini history format to OpenAI/Sarvam format
+    for (const turn of history) {
+        const role: 'user' | 'assistant' = turn.role === 'user' ? 'user' : 'assistant';
+        msgs.push({ role, content: turn.parts.map((p) => p.text).join('\n') });
+    }
+
+    msgs.push({ role: 'user', content: userMessage });
+
+    return callSarvam(msgs, options);
 }
 
 /**
  * getGeminiModel()
- * Legacy shim — kept so existing callers that do model.startChat() still work.
- * New code should use callGeminiJSON / callGeminiText / callGeminiChat directly.
+ * Legacy shim — kept for backward compatibility.
  */
 export function getGeminiModel(options: GeminiModelOptions = {}) {
     return {
@@ -180,7 +194,6 @@ export function getGeminiModel(options: GeminiModelOptions = {}) {
             return {
                 async sendMessage(text: string): Promise<{ response: { text: () => string } }> {
                     const reply = await callGeminiChat(history, text, options);
-                    // Push the exchange into local history for multi-turn consistency
                     history.push({ role: 'user', parts: [{ text }] });
                     history.push({ role: 'model', parts: [{ text: reply }] });
                     return { response: { text: () => reply } };
@@ -188,10 +201,7 @@ export function getGeminiModel(options: GeminiModelOptions = {}) {
             };
         },
         async generateContent(prompt: string): Promise<{ response: { text: () => string } }> {
-            const reply = await callGeminiRaw(
-                [{ role: 'user', parts: [{ text: prompt }] }],
-                options,
-            );
+            const reply = await callGeminiText(prompt, options);
             return { response: { text: () => reply } };
         },
     };
