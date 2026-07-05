@@ -11,6 +11,7 @@ import PredictionPanel from '@/components/PredictionPanel';
 import AIChat, { AIChatHandle } from '@/components/AIChat';
 import WaterAnalysisPanel from '@/components/WaterAnalysisPanel';
 import LanguageSelector from '@/components/LanguageSelector';
+import VisualWaterInspector from '@/components/VisualWaterInspector';
 
 export default function Home() {
   // Ref lets WaterAnalysisPanel trigger chat messages ("Explain More")
@@ -78,6 +79,9 @@ export default function Home() {
 
         {/* ── AI Chat ── */}
         <AIChat ref={chatRef} />
+
+        {/* ── Visual Water Inspector ── */}
+        <VisualWaterInspector />
 
         <p className="text-center text-gray-700 text-xs mt-16">
           AquaVitals © {new Date().getFullYear()} — GenAI-Powered Water Intelligence · Built for SDG 6
